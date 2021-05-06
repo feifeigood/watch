@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from watch import app
 from watch.utils.decorate_view import *
 from watch.utils.render_page import render_page
