@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from os import path
 from platform import platform
 from time import sleep
@@ -42,33 +44,32 @@ def get_welcome_page():
 
 @app.route('/get_user')
 def get_user():
-    return render_template('layout.html'
-                           , text=f'Hello, {session["user_name"]}! Someday you will see here your profile settings...')
+    return render_template('layout.html', text=f'Hello, {session["user_name"]}! Someday you will see here your profile settings...')
 
 
-@app.route('/adm')
-@title('Administration')
-def get_app():
-    info = [('Startup time', startup_time.strftime(app.config['DATETIME_FORMAT']))
-            , ('Oracle client version', '.'.join((str(x) for x in clientversion())))
-            , ('OS version ', platform())]
-    with lock:
-        if target_pool:
-            info.append(('Session pools ', ', '.join(target_pool.keys())))
+# @app.route('/adm')
+# @title('Administration')
+# def get_app():
+#     info = [('Startup time', startup_time.strftime(app.config['DATETIME_FORMAT']))
+#             , ('Oracle client version', '.'.join((str(x) for x in clientversion())))
+#             , ('OS version ', platform())]
+#     with lock:
+#         if target_pool:
+#             info.append(('Session pools ', ', '.join(target_pool.keys())))
 
-        info.append(('Task worker', 'ON' if worker.is_alive() else 'OFF'))
-        info.append(('Chat bot', 'ON' if bot.is_alive() else 'OFF'))
+#         info.append(('Task worker', 'ON' if worker.is_alive() else 'OFF'))
+#         info.append(('Chat bot', 'ON' if bot.is_alive() else 'OFF'))
 
-        if app.config['DND_HOURS']:
-            info.append(('Do not disturb hours', f"from {app.config['DND_HOURS'][0]}:00"
-                                                 f" to {app.config['DND_HOURS'][1]}:00"))
+#         if app.config['DND_HOURS']:
+#             info.append(('Do not disturb hours', f"from {app.config['DND_HOURS'][0]}:00"
+#                                                  f" to {app.config['DND_HOURS'][1]}:00"))
 
-        t = render_template('administration.html'
-                            , info=info
-                            , active_connections=active_connections
-                            , task_pool=task_pool
-                            , task_id=request.args.get('task_id', ''))
-    return t
+#         t = render_template('administration.html'
+#                             , info=info
+#                             , active_connections=active_connections
+#                             , task_pool=task_pool
+#                             , task_id=request.args.get('task_id', ''))
+#     return t
 
 
 @app.route('/cancel_sql')
@@ -111,7 +112,7 @@ def manage_task(action):  # TODO: divide to 3 views
 
 
 @app.route('/logout')
-@title('Log out')
+@title('退出登录')
 def logout():
     session.pop('user_name', None)
     return redirect(url_for('login'))
@@ -151,7 +152,8 @@ def stop_server():
 @app.route('/error_log')
 @title('View error log')
 def get_error_log():
-    file = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'logs', app.config['ERROR_LOG_NAME'])
+    file = path.join(path.dirname(path.dirname(path.abspath(
+        __file__))), 'logs', app.config['ERROR_LOG_NAME'])
     if not path.exists(file):
         abort(404)
     return send_file(file, mimetype='text/plain', cache_timeout=0)
@@ -160,7 +162,8 @@ def get_error_log():
 @app.route('/access_log')
 @title('View access log')
 def get_access_log():
-    file = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'logs', app.config['ACCESS_LOG_NAME'])
+    file = path.join(path.dirname(path.dirname(path.abspath(
+        __file__))), 'logs', app.config['ACCESS_LOG_NAME'])
     if not path.exists(file):
         abort(404)
     return send_file(file, mimetype='text/plain', cache_timeout=0)
@@ -168,33 +171,22 @@ def get_access_log():
 
 @app.route('/notifications')
 @title('Tasks notifications')
-@columns({'time': 'datetime'
-          , 'uuid': 'str'
-          , 'task': 'str'
-          , 'message': 'str'})
+@columns({'time': 'datetime', 'uuid': 'str', 'task': 'str', 'message': 'str'})
 def get_notifications():
     with lock:
-        task_count = len(tuple(1 for v in task_pool.values() if v.state in ('wait', 'run')))
-        t = render_template('static_list.html'
-                            , text=f'{task_count} tasks are active. '
-                                   f'Only last {app.config["MAX_KEPT_NOTIFICATIONS"]} task messages will be kept.'
-                            , data=notification_pool)
+        task_count = len(tuple(1 for v in task_pool.values()
+                               if v.state in ('wait', 'run')))
+        t = render_template('static_list.html', text=f'{task_count} tasks are active. '
+                            f'Only last {app.config["MAX_KEPT_NOTIFICATIONS"]} task messages will be kept.', data=notification_pool)
     return t
 
 
 @app.route('/unsent')
 @title('Unsent messages')
-@columns({'time': 'datetime'
-          , 'uuid': 'str'
-          , 'task': 'str'
-          , 'chat_id': 'str'
-          , 'reply_to': 'str'
-          , 'message': 'str'})
+@columns({'time': 'datetime', 'uuid': 'str', 'task': 'str', 'chat_id': 'str', 'reply_to': 'str', 'message': 'str'})
 def get_unsent_messages():
     with lock:
-        t = render_template('static_list.html'
-                            , text=f'These task messages were not sent due to network problems.'
-                            , data=unsent_pool)
+        t = render_template('static_list.html', text=f'These task messages were not sent due to network problems.', data=unsent_pool)
     return t
 
 

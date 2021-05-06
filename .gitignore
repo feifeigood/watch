@@ -10,3 +10,6 @@ todo*
 /watch/ext/*
 !/watch/ext/__init__.py
 /run.py
+build
+dist
+watch.egg-info
