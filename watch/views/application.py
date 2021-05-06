@@ -191,7 +191,7 @@ def get_unsent_messages():
 
 
 @app.route('/<target>/get_ext')
-@title('Extensions')
+@title('扩展信息')
 def get_ext(target):
     return render_template('layout.html')
 

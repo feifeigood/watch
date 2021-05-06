@@ -10,12 +10,9 @@ from watch.utils.render_page import render_page
 
 
 @app.route('/<target>/snapshot')
-@title('Workload')
+@title('工作负载')
 @template('list')
-@columns({"snap_id": 'int'
-         , "cast(begin_interval_time as date) begin_date": 'datetime'
-         , "cast(end_interval_time as date) end_date": 'datetime'
-         , "snap_flag": 'int'})
+@columns({"snap_id": 'int', "cast(begin_interval_time as date) begin_date": 'datetime', "cast(end_interval_time as date) end_date": 'datetime', "snap_flag": 'int'})
 @select("dba_hist_snapshot")
 @default_sort("snap_id")
 @default_filters("begin_date > -1d")
@@ -39,29 +36,24 @@ def get_awr_report(target):
                             " from table(dbms_workload_repository.awr_report_html("
                             "(select dbid from v$database)"
                             ", (select instance_number from v$instance)"
-                            ", :bid, :eid, 8))"
-                    , {'bid': request.args['bid'], 'eid': request.args['eid']}
-                    , fetch_mode='many')
+                            ", :bid, :eid, 8))", {'bid': request.args['bid'], 'eid': request.args['eid']}, fetch_mode='many')
     else:
         r = execute(target, "select output"
                             " from table(dbms_workload_repository.awr_sql_report_html("
                             "(select dbid from v$database)"
                             ", (select instance_number from v$instance)"
-                            ", :bid, :eid, :sql_id))"
-                    , {'bid': request.args['bid'], 'eid': request.args['eid'], 'sql_id': request.args['sql_id']}
-                    , fetch_mode='many')
+                            ", :bid, :eid, :sql_id))", {'bid': request.args['bid'], 'eid': request.args['eid'], 'sql_id': request.args['sql_id']}, fetch_mode='many')
     if not r:
         flash('Not found')
         return render_template('awr.html', snapshots=s, data=None)
-    root = ElementTree.fromstring(''.join(item[0] for item in r if item[0])).find('./body')
+    root = ElementTree.fromstring(
+        ''.join(item[0] for item in r if item[0])).find('./body')
     root.find('./h1').clear()
     for item in root:
         item.attrib.pop('border', None)
         item.attrib.pop('class', None)
         item.attrib.pop('summary', None)
-    return render_template('awr.html'
-                           , snapshots=s
-                           , data=[ElementTree.tostring(item, method='html').decode('utf-8') for item in root])
+    return render_template('awr.html', snapshots=s, data=[ElementTree.tostring(item, method='html').decode('utf-8') for item in root])
 
 
 @app.route('/<target>/ash')
@@ -88,31 +80,24 @@ def get_ash_report(target):
                         " from table(dbms_workload_repository.ash_report_html("
                         "l_dbid => (select dbid from v$database)"
                         ", l_inst_num => (select instance_number from v$instance)"
-                        ", " + ", ".join(k + ' => :' + k for k in required_values.keys()) + "))"
-                , required_values
-                , fetch_mode='many')
+                        ", " + ", ".join(k + ' => :' + k for k in required_values.keys()) + "))", required_values, fetch_mode='many')
     if not r:
         flash('Not found')
         return render_template('ash.html', data=None)
-    root = ElementTree.fromstring(''.join(item[0].replace('<<', '&lt;&lt;') for item in r if item[0])).find('./body')
+    root = ElementTree.fromstring(''.join(item[0].replace(
+        '<<', '&lt;&lt;') for item in r if item[0])).find('./body')
     root.find('./h1').clear()
     for item in root:
         item.attrib.pop('border', None)
         item.attrib.pop('class', None)
         item.attrib.pop('summary', None)
-    return render_template('ash.html'
-                           , data=[ElementTree.tostring(item, method='html').decode('utf-8') for item in root])
+    return render_template('ash.html', data=[ElementTree.tostring(item, method='html').decode('utf-8') for item in root])
 
 
 @app.route('/<target>/ad_tasks')
 @title('Advisor tasks')
 @template('list')
-@columns({"task_id": 'int'
-          , "execution_end": 'datetime'
-          , "owner": 'str'
-          , "task_name": 'str'
-          , "advisor_name": 'str'
-          , "description": 'str'})
+@columns({"task_id": 'int', "execution_end": 'datetime', "owner": 'str', "task_name": 'str', "advisor_name": 'str', "description": 'str'})
 @select("dba_advisor_tasks")
 @default_sort("execution_end desc")
 @default_filters("execution_end > -1d")
@@ -125,9 +110,7 @@ def get_advisor_tasks(target):
 @template('single')
 @content('text')
 @function("dbms_advisor.get_task_report")
-@parameters({'level': 'ALL'
-             , 'owner_name': ':owner'
-             , 'task_name': ':task'})
+@parameters({'level': 'ALL', 'owner_name': ':owner', 'task_name': ':task'})
 def get_advisor_task_report(target, owner, task):
     return render_page()
 
@@ -135,15 +118,7 @@ def get_advisor_task_report(target, owner, task):
 @app.route('/<target>/ad_findings')
 @title('Advisor findings')
 @template('list')
-@columns({"e.execution_start": 'datetime'
-          , "f.type as f_type": 'str'
-          , "o.type as o_type": 'str'
-          , "o.attr1": 'str'
-          , "o.attr2": 'str'
-          , "o.attr3": 'str'
-          , "o.attr4": 'str'
-          , "f.message": 'str'
-          , "f.more_info": 'str'})
+@columns({"e.execution_start": 'datetime', "f.type as f_type": 'str', "o.type as o_type": 'str', "o.attr1": 'str', "o.attr2": 'str', "o.attr3": 'str', "o.attr4": 'str', "f.message": 'str', "f.more_info": 'str'})
 @select("dba_advisor_objects o"
         " join dba_advisor_executions e on e.task_id = o.task_id"
         " join dba_advisor_findings f on f.task_id = o.task_id and f.object_id = o.object_id"
@@ -158,13 +133,7 @@ def get_advisor_findings(target):
 @title('Alert history')
 @auto()
 @template('list')
-@columns({"object_name": 'str'
-          , "subobject_name": 'str'
-          , "object_type": 'str'
-          , "cast(creation_time as date) creation_time": 'datetime'
-          , "cast(time_suggested as date) time_suggested": 'datetime'
-          , "reason": 'str'
-          , "suggested_action": 'str'})
+@columns({"object_name": 'str', "subobject_name": 'str', "object_type": 'str', "cast(creation_time as date) creation_time": 'datetime', "cast(time_suggested as date) time_suggested": 'datetime', "reason": 'str', "suggested_action": 'str'})
 @select("dba_alert_history")
 def get_alert_history(target):
     return render_page()
